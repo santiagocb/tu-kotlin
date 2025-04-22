@@ -1,4 +1,4 @@
-
-fun main() {
-    println("Hello World!")
+fun hello(): String {
+    println("Hello, World of Kotlin")
+    return "Hello, World!"
 }
