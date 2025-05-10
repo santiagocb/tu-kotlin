@@ -19,7 +19,7 @@ repositories {
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
 	implementation("org.springframework.data:spring-data-r2dbc")
-	implementation("io.r2dbc:r2dbc-h2")
+	implementation("io.r2dbc:r2dbc-postgresql:1.0.0.RELEASE")
 	implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
 	implementation("org.springframework.boot:spring-boot-starter-cache")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
@@ -27,10 +27,6 @@ dependencies {
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 
-
-	runtimeOnly("com.h2database:h2")
-
-	testImplementation("com.h2database:h2") // H2 for testing
 	testImplementation("org.springframework.boot:spring-boot-starter-test") {
 		exclude(module = "mockito-core")
 	}
