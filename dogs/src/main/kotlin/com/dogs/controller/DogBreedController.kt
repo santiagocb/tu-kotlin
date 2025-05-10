@@ -3,6 +3,7 @@ package com.dogs.controller
 import com.dogs.service.DogBreedService
 import com.dogs.model.DogBreedResponse
 import io.swagger.v3.oas.annotations.tags.Tag
+import kotlinx.coroutines.flow.Flow
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -13,8 +14,6 @@ import org.springframework.web.bind.annotation.RestController
 class DogBreedController(private val dogBreedService: DogBreedService) {
 
     @GetMapping
-    suspend fun getAllDogBreeds(): List<DogBreedResponse> =
-        dogBreedService.getBreeds().map { dogBreed ->
-            DogBreedResponse(dogBreed.breed, dogBreed.subBreed?.split(","))
-        }
+    suspend fun getAllDogBreeds(): Flow<DogBreedResponse> =
+        dogBreedService.getBreeds()
 }
