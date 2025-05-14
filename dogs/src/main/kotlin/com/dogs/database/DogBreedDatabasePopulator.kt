@@ -15,12 +15,12 @@ class DogBreedDatabasePopulator(
 ) : ApplicationRunner {
 
     override fun run(args: ApplicationArguments) = runBlocking {
-        val breedsInDb = dogBreedService.getBreeds().toList()
+        val breedsInDb = dogBreedService.getBreeds()
 
-        println(">>>>> breedsInDb are ${breedsInDb.count()}}")
+        //println(">>>>> breedsInDb are ${breedsInDb.count()}}")
         if (breedsInDb.isEmpty()) {
             val breeds = dogBreedApiClient.getBreeds()
-            println(breeds)
+            //println(breeds)
             dogBreedService.save(breeds)
         }
     }

@@ -7,5 +7,6 @@ import org.springframework.data.relational.core.mapping.Table
 data class DogBreed(
     @Id val id: Long? = null,
     val breed: String,
-    val subBreed: String?
+    val subBreed: String?,
+    val image: ByteArray? = null
 )
