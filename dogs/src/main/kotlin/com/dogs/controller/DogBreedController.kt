@@ -17,8 +17,10 @@ import org.springframework.web.bind.annotation.RestController
 class DogBreedController(private val dogBreedService: DogBreedService) {
 
     @GetMapping("/breeds")
-    suspend fun getAllDogBreeds(): List<DogBreedResponse> =
-        dogBreedService.getBreeds()
+    suspend fun getAllDogBreeds(): List<DogBreedResponse> {
+        println("Service: Calling getBreeds")
+        return dogBreedService.getBreeds()
+    }
 
     @GetMapping("/subBreeds")
     suspend fun getAllSubBreeds(): List<DogSubBreedResponse> =

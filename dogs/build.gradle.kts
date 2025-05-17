@@ -1,8 +1,8 @@
 plugins {
-	kotlin("jvm") version "1.9.25"
-	kotlin("plugin.spring") version "1.9.25"
-	id("org.springframework.boot") version "3.4.5"
-	id("io.spring.dependency-management") version "1.1.7"
+	kotlin("jvm") version "1.9.10"
+	kotlin("plugin.spring") version "1.9.10"
+	id("org.springframework.boot") version "3.1.4"
+	id("io.spring.dependency-management") version "1.1.2"
 }
 
 group = "com.dogs"
@@ -38,7 +38,7 @@ dependencies {
 	testImplementation("org.testcontainers:r2dbc")
 	testImplementation("io.mockk:mockk:1.13.5")
 
-	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
+	implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.1.0")
 }
 
 kotlin {

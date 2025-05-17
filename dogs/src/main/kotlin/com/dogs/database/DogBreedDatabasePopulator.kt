@@ -17,10 +17,8 @@ class DogBreedDatabasePopulator(
     override fun run(args: ApplicationArguments) = runBlocking {
         val breedsInDb = dogBreedService.getBreeds()
 
-        //println(">>>>> breedsInDb are ${breedsInDb.count()}}")
         if (breedsInDb.isEmpty()) {
             val breeds = dogBreedApiClient.getBreeds()
-            //println(breeds)
             dogBreedService.save(breeds)
         }
     }
