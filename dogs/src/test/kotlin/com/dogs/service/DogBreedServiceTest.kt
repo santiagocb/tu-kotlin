@@ -2,12 +2,19 @@ package com.dogs.service
 
 import com.dogs.api.DogBreedApiClient
 import com.dogs.model.DogBreed
+import com.dogs.model.DogBreedResponse
 import com.dogs.repository.DogBreedRepository
 import io.mockk.*
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.springframework.cache.CacheManager
+import org.springframework.cache.caffeine.CaffeineCacheManager
+import org.springframework.cache.concurrent.ConcurrentMapCache
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.web.reactive.function.client.WebClientResponseException
@@ -27,30 +34,69 @@ class DogBreedServiceTest {
     }
 
     @Test
-    fun `example test`() = runBlocking {
-        val result = true
-        assertEquals(true, result)
+    fun `save should correctly transform breeds map and call saveAll`() = runBlocking {
+        // Given
+        val mockInput = mapOf(
+            "bulldog" to listOf("english", "french"),
+            "beagle" to emptyList()
+        )
+        val expectedOutput = listOf(
+            DogBreed(breed = "bulldog", subBreed = "english,french"),
+            DogBreed(breed = "beagle", subBreed = "")
+        )
+
+        val mockFlow = mockk<kotlinx.coroutines.flow.Flow<DogBreed>>()
+        coEvery { mockFlow.collect(any()) } just Runs
+        coEvery { dogBreedRepository.saveAll(expectedOutput) } returns mockFlow
+
+        // When
+        dogBreedService.save(mockInput)
+
+        // Then
+        coVerify { dogBreedRepository.saveAll(expectedOutput) }
     }
 
     @Test
-    fun `getBreedImage - returns image from database if present`() = runBlocking {
-        // Arrange
+    fun `getBreeds should fetch from repository and map correctly`() = runBlocking {
+        // Given
+        val mockData = flowOf(
+            DogBreed(id = 1, breed = "bulldog", subBreed = "english,french"),
+            DogBreed(id = 2, breed = "beagle", subBreed = null)
+        )
+        val expectedResponse = listOf(
+            DogBreedResponse(breed = "bulldog", subBreeds = listOf("english", "french")),
+            DogBreedResponse(breed = "beagle", subBreeds = null)
+        )
+        coEvery { dogBreedRepository.findAll() } returns mockData
+
+        // When
+        val result = dogBreedService.getBreeds()
+
+        // Then
+        assertEquals(expectedResponse, result)
+        coVerify(exactly = 1) { dogBreedRepository.findAll() }
+    }
+
+
+    @Test
+    fun `getBreedImage should returns image from database if present`() = runBlocking {
+        // Given
         val mockedBreed = DogBreed(id = 1, breed = "bulldog", subBreed = null, image = byteArrayOf(1, 2, 3))
         coEvery { dogBreedRepository.findByBreed("bulldog") } returns mockedBreed
 
-        // Act
+        // When
         val result = dogBreedService.getBreedImage("bulldog")
 
-        // Assert
+        // Then
         assertNotNull(result)
-        assertArrayEquals(byteArrayOf(1, 2, 3), result) // Verify the correct image is returned
-        coVerify(exactly = 1) { dogBreedRepository.findByBreed("bulldog") } // Ensures repo method is called
-        coVerify(exactly = 0) { dogBreedApiClient.fetchImageFromAPI(any()) } // Ensures API is not called
+        assertArrayEquals(byteArrayOf(1, 2, 3), result)
+        coVerify(exactly = 1) { dogBreedRepository.findByBreed("bulldog") }
+        coVerify(exactly = 0) { dogBreedApiClient.fetchImageFromAPI(any()) }
     }
 
     @Test
-    fun `getBreedImage - fetches and stores image if not in database`() = runBlocking {
-        // Arrange
+    fun `getBreedImage should fetches and stores image if not in database`() = runBlocking {
+        // Given
         val mockedBreed = DogBreed(id = 1, breed = "bulldog", subBreed = null, image = null)
         val imageUrl = "http://example.com/bulldog.jpg"
         val imageBytes = byteArrayOf(1, 2, 3)
@@ -60,10 +106,10 @@ class DogBreedServiceTest {
         coEvery { dogBreedApiClient.downloadImage(imageUrl) } returns imageBytes
         coEvery { dogBreedRepository.save(any()) } returns mockedBreed.copy(image = imageBytes)
 
-        // Act
+        // When
         val result = dogBreedService.getBreedImage("bulldog")
 
-        // Assert
+        // Then
         assertNotNull(result)
         assertArrayEquals(imageBytes, result)
         coVerify { dogBreedRepository.findByBreed("bulldog") }
@@ -73,7 +119,7 @@ class DogBreedServiceTest {
     }
 
     @Test
-    fun `getBreedImage - throws exception for breed not found in API`() = runBlocking {
+    fun `getBreedImage should throws exception for breed not found in API`() = runBlocking {
         // Arrange
         coEvery { dogBreedRepository.findByBreed("unknown") } returns null
         coEvery { dogBreedApiClient.fetchImageFromAPI("unknown") } throws WebClientResponseException.create(
