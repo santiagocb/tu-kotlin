@@ -1,150 +1,162 @@
 package com.dogs.controller
 
 import com.dogs.model.DogBreedResponse
+import com.dogs.model.DogSubBreedResponse
 import com.dogs.service.DogBreedService
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.context.TestConfiguration
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
+import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.http.MediaType
+import org.springframework.test.context.TestPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT) // Boot app with random port for testing
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@TestPropertySource(properties = ["spring.profiles.active=test"])
 class DogBreedControllerIntegrationTest {
 
-    @Autowired
-    private lateinit var webTestClient: WebTestClient // Injected WebTestClient
+    /*
+        Learning: MockK and @MockBean (a Spring Boot feature designed for Mockito) can not live together.
+        By default, Spring's @MockBean uses Mockito as the mock framework, meaning it does not integrate directly with MockK.
+        In this case @MockBean is used. MockK is used for testing the service.
+     */
 
     @Autowired
-    private lateinit var dogBreedService: DogBreedService // Injected mock service
+    private lateinit var webTestClient: WebTestClient
 
-    @TestConfiguration
-    class TestConfig {
-
-        @Bean
-        fun dogBreedService(): DogBreedService {
-            return mockk() // Relaxed mock allows unmocked default behavior
-        }
-    }
+    @MockBean
+    private lateinit var dogBreedService: DogBreedService
 
     @Test
     fun `GET v1 breeds should return all breeds`() = runBlocking {
-        // Arrange
-        val mockResponse = listOf(
+        // Given
+        val mockDogBreedResponse = listOf(
             DogBreedResponse(breed = "bulldog", subBreeds = listOf("english", "french")),
             DogBreedResponse(breed = "beagle", subBreeds = null)
         )
-        coEvery { dogBreedService.getBreeds() } returns mockResponse
+        Mockito.`when`(runBlocking { dogBreedService.getBreeds() })
+            .thenReturn(mockDogBreedResponse)
 
-        // Act & Assert
-       val result = webTestClient.get().uri("/v1/breeds") // Call the endpoint
+        // When
+        val result = webTestClient.get()
+            .uri("/v1/breeds")
             .accept(MediaType.APPLICATION_JSON)
             .exchange()
-            .expectStatus().isOk // Assert HTTP 200
+            .expectStatus().isOk
             .expectBodyList(DogBreedResponse::class.java)
             .returnResult()
             .responseBody ?: emptyList()
 
-        Assertions.assertEquals(mockResponse, result)
-
-        coVerify(exactly = 1) { dogBreedService.getBreeds() } // Verify the service is called once
+        // Then
+        assertEquals(
+            mockDogBreedResponse,
+            result
+        )
     }
 
+    @Test
+    fun `GET v1 subBreeds should return all sub-breeds`() = runBlocking {
+        // Given
+        val mockDogSubreedResponse = listOf(
+            DogSubBreedResponse(subBreed = "english"),
+            DogSubBreedResponse(subBreed = "french")
+        )
+        Mockito.`when`(runBlocking { dogBreedService.getAllSubBreeds() })
+            .thenReturn(mockDogSubreedResponse)
 
-//    @Test
-//    fun `GET v1/subBreeds should return all sub-breeds`() = runBlocking {
-//        // Arrange
-//        val mockResponse = listOf(
-//            DogSubBreedResponse(subBreed = "english"),
-//            DogSubBreedResponse(subBreed = "french")
-//        )
-//        coEvery { dogBreedService.getAllSubBreeds() } returns mockResponse
-//
-//        // Act & Assert
-//        webTestClient.get().uri("/v1/subBreeds")
-//            .accept(MediaType.APPLICATION_JSON)
-//            .exchange()
-//            .expectStatus().isOk // Assert HTTP 200
-//            .expectBodyList(DogSubBreedResponse::class.java)
-//            .isEqualTo(mockResponse)
-//
-//        coVerify(exactly = 1) { dogBreedService.getAllSubBreeds() }
-//    }
-//
-//    @Test
-//    fun `GET v1/withoutSubBreeds should return breeds without sub-breeds`() = runBlocking {
-//        // Arrange
-//        val mockResponse = flowOf(
-//            DogBreedResponse(breed = "beagle", subBreeds = null),
-//            DogBreedResponse(breed = "chihuahua", subBreeds = null)
-//        )
-//        coEvery { dogBreedService.getBreedsWithoutSubBreeds() } returns mockResponse
-//
-//        // Act & Assert
-//        webTestClient.get().uri("/v1/withoutSubBreeds")
-//            .accept(MediaType.APPLICATION_JSON)
-//            .exchange()
-//            .expectStatus().isOk
-//            .expectBodyList(DogBreedResponse::class.java)
-//            .consumeWith { body ->
-//                val responseBody = body.responseBody!!
-//                assertEquals(2, responseBody.size)
-//                assertEquals("beagle", responseBody[0].breed)
-//                assertEquals(null, responseBody[0].subBreeds)
-//            }
-//
-//        coVerify(exactly = 1) { dogBreedService.getBreedsWithoutSubBreeds() }
-//    }
-//
-//    @Test
-//    fun `GET v1/breeds/{breed}/subBreeds should return sub-breeds for a specific breed`() = runBlocking {
-//        // Arrange
-//        val breed = "bulldog"
-//        val mockResponse = listOf(
-//            DogSubBreedResponse(subBreed = "english"),
-//            DogSubBreedResponse(subBreed = "french")
-//        )
-//        coEvery { dogBreedService.getSubBreedsForBreed(breed) } returns mockResponse
-//
-//        // Act & Assert
-//        webTestClient.get().uri("/v1/breeds/$breed/subBreeds")
-//            .accept(MediaType.APPLICATION_JSON)
-//            .exchange()
-//            .expectStatus().isOk
-//            .expectBodyList(DogSubBreedResponse::class.java)
-//            .isEqualTo(mockResponse)
-//
-//        coVerify(exactly = 1) { dogBreedService.getSubBreedsForBreed(breed) }
-//    }
-//
-//    @Test
-//    fun `GET v1/breeds/{breed}/image should return the image`() = runBlocking {
-//        // Arrange
-//        val breed = "beagle"
-//        val mockImage = byteArrayOf(1, 2, 3, 4) // Mocked image data
-//        coEvery { dogBreedService.getBreedImage(breed) } returns mockImage
-//
-//        // Act & Assert
-//        webTestClient.get().uri("/v1/breeds/$breed/image")
-//            .accept(MediaType.IMAGE_JPEG)
-//            .exchange()
-//            .expectStatus().isOk
-//            .expectHeader().contentType(MediaType.IMAGE_JPEG)
-//            .expectBody()
-//            .consumeWith {
-//                val responseBody = it.responseBody
-//                assertEquals(mockImage.toList(), responseBody?.toList()) // Verify binary data matches mock
-//            }
-//
-//        coVerify(exactly = 1) { dogBreedService.getBreedImage(breed) }
-//    }
+        // When
+        val result = webTestClient.get().uri("/v1/subBreeds")
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus().isOk // Assert HTTP 200
+            .expectBodyList(DogSubBreedResponse::class.java)
+            .returnResult()
+            .responseBody ?: emptyList()
+
+        // Then
+        assertEquals(
+            mockDogSubreedResponse,
+            result
+        )
+    }
+
+    @Test
+    fun `GET v1 withoutSubBreeds should return breeds without sub-breeds`() = runBlocking {
+        // Given
+        val mockResponse = flowOf(
+            DogBreedResponse(breed = "beagle", subBreeds = null),
+            DogBreedResponse(breed = "chihuahua", subBreeds = null)
+        )
+        Mockito.`when`(runBlocking { dogBreedService.getBreedsWithoutSubBreeds() })
+            .thenReturn(mockResponse)
+
+        // When
+        val result = webTestClient.get().uri("/v1/withoutSubBreeds")
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus().isOk
+            .expectBodyList(DogBreedResponse::class.java)
+            .returnResult()
+            .responseBody ?: emptyList()
+
+        // Then
+        assertEquals(
+            mockResponse.toList(),
+            result
+        )
+    }
+
+    @Test
+    fun `GET v1 breeds {breed} subBreeds should return sub-breeds for a specific breed`() = runBlocking {
+        // Given
+        val breed = "bulldog"
+        val mockResponse = listOf(
+            DogSubBreedResponse(subBreed = "english"),
+            DogSubBreedResponse(subBreed = "french")
+        )
+        Mockito.`when`(runBlocking { dogBreedService.getSubBreedsForBreed(breed)  })
+            .thenReturn(mockResponse)
+
+        // When
+        val result = webTestClient.get().uri("/v1/breeds/$breed/subBreeds")
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus().isOk
+            .expectBodyList(DogSubBreedResponse::class.java)
+            .returnResult()
+            .responseBody ?: emptyList()
+
+        // Then
+        assertEquals(
+            mockResponse.toList(),
+            result
+        )
+    }
+
+    @Test
+    fun `GET v1 breeds {breed} image should return the image`(): Unit = runBlocking {
+        // Given
+        val breed = "beagle"
+        val mockImage = byteArrayOf(1, 2, 3, 4)
+        Mockito.`when`(runBlocking { dogBreedService.getBreedImage(breed)  })
+            .thenReturn(mockImage)
+
+        // When
+        webTestClient.get().uri("/v1/breeds/$breed/image")
+            .accept(MediaType.IMAGE_JPEG)
+            .exchange()
+            .expectStatus().isOk
+            .expectHeader().contentType(MediaType.IMAGE_JPEG)
+            .expectBody()
+            .consumeWith {
+                // Then
+                val responseBody = it.responseBody
+                assertEquals(mockImage.toList(), responseBody?.toList())
+            }
+    }
 }

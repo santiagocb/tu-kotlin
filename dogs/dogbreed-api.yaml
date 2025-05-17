@@ -1,0 +1,187 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Dog Breed API",
+    "description": "API for managing dog breeds and sub-breeds.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Generated server url"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Dog Breed APIs",
+      "description": "Breed APIs for demo purpose"
+    }
+  ],
+  "paths": {
+    "/v1/withoutSubBreeds": {
+      "get": {
+        "tags": [
+          "Dog Breed APIs"
+        ],
+        "operationId": "getBreedsWithoutSubBreeds",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DogBreedResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/subBreeds": {
+      "get": {
+        "tags": [
+          "Dog Breed APIs"
+        ],
+        "operationId": "getAllSubBreeds",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DogSubBreedResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/breeds": {
+      "get": {
+        "tags": [
+          "Dog Breed APIs"
+        ],
+        "operationId": "getAllDogBreeds",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DogBreedResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/breeds/{breed}/subBreeds": {
+      "get": {
+        "tags": [
+          "Dog Breed APIs"
+        ],
+        "operationId": "getSubBreedsForBreed",
+        "parameters": [
+          {
+            "name": "breed",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DogSubBreedResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/breeds/{breed}/image": {
+      "get": {
+        "tags": [
+          "Dog Breed APIs"
+        ],
+        "operationId": "getBreedImage",
+        "parameters": [
+          {
+            "name": "breed",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DogBreedResponse": {
+        "required": [
+          "breed"
+        ],
+        "type": "object",
+        "properties": {
+          "breed": {
+            "type": "string"
+          },
+          "subBreeds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "DogSubBreedResponse": {
+        "required": [
+          "subBreed"
+        ],
+        "type": "object",
+        "properties": {
+          "subBreed": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
