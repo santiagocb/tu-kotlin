@@ -23,7 +23,6 @@ class DogBreedService(
         val dogBreeds = breeds.map { (breed, subBreeds) ->
             DogBreed(breed = breed, subBreed = subBreeds.joinToString(","))
         }
-        //println("Saving ${dogBreeds.size} dog breeds in database")
         dogBreedRepository.saveAll(dogBreeds).collect()
     }
 

@@ -18,7 +18,6 @@ class DogBreedController(private val dogBreedService: DogBreedService) {
 
     @GetMapping("/breeds")
     suspend fun getAllDogBreeds(): List<DogBreedResponse> {
-        println("Service: Calling getBreeds")
         return dogBreedService.getBreeds()
     }
 
